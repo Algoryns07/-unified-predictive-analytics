@@ -1,0 +1,12 @@
+random_seed: 42
+test_size: 0.25
+drift:
+  psi_threshold: 0.10
+  ks_alpha: 0.05
+  wasserstein_threshold: 0.20
+impact:
+  harmful_f1_drop: 0.05
+  severe_f1_drop: 0.12
+cost:
+  retraining_cost: 0.08
+  minimum_benefit: 0.03
