@@ -2,6 +2,8 @@
 
 from pathlib import Path
 import json
+import platform
+import sklearn
 
 import pandas as pd
 from sklearn.datasets import load_breast_cancer
@@ -250,6 +252,14 @@ def run():
         "dataset": "scikit-learn breast cancer",
         "model": "Logistic Regression",
         "random_state": RANDOM_STATE,
+        "python_version": platform.python_version(),
+        "scikit_learn_version": sklearn.__version__,
+        "sample_counts": {
+            "training": len(X_train),
+            "reference": len(X_reference),
+            "monitoring_retraining": len(X_adapt),
+            "future_evaluation": len(X_evaluation),
+        },
         "data_protocol": (
             "Separate training, reference, monitoring/retraining, "
             "and future evaluation datasets."
