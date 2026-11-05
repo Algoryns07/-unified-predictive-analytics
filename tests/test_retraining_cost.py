@@ -58,3 +58,26 @@ def test_measure_repeated_rejects_zero_repetitions():
 
     with pytest.raises(ValueError):
         measure_repeated(lambda: 42, 0)
+
+
+def test_export_measurement_summary_creates_csv(tmp_path):
+    import csv
+    from src.retraining_cost import export_measurement_summary
+
+    summary = {
+        "wall_time_seconds": {
+            "mean": 0.5,
+            "median": 0.4,
+            "std": 0.1,
+        }
+    }
+
+    output = tmp_path / "resource_summary.csv"
+    export_measurement_summary(summary, output)
+
+    with output.open(newline="", encoding="utf-8") as file:
+        rows = list(csv.DictReader(file))
+
+    assert len(rows) == 1
+    assert rows[0]["metric"] == "wall_time_seconds"
+    assert float(rows[0]["mean"]) == 0.5

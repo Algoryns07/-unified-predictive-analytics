@@ -75,3 +75,28 @@ def measure_repeated(
         }
 
     return results, summary
+
+
+def export_measurement_summary(summary, output_path):
+    """Export repeated resource measurements to a CSV file."""
+    import csv
+    from pathlib import Path
+
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    fieldnames = ["metric", "mean", "median", "std"]
+
+    with output_path.open("w", newline="", encoding="utf-8") as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+
+        for metric, values in summary.items():
+            writer.writerow({
+                "metric": metric,
+                "mean": values["mean"],
+                "median": values["median"],
+                "std": values["std"],
+            })
+
+    return output_path
