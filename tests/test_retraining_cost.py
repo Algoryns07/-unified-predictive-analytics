@@ -40,3 +40,21 @@ def test_measure_callable_stops_memory_tracing_after_execution():
     measure_callable(lambda: sum(range(100)))
 
     assert not tracemalloc.is_tracing()
+
+def test_measure_repeated_collects_all_runs():
+    from src.retraining_cost import measure_repeated
+
+    results, summary = measure_repeated(lambda: sum(range(100)), 3)
+
+    assert len(results) == 3
+    assert len(summary) == 3
+    assert summary["wall_time_seconds"]["mean"] >= 0
+    assert summary["process_cpu_time_seconds"]["mean"] >= 0
+    assert summary["peak_traced_memory_mb"]["mean"] >= 0
+
+
+def test_measure_repeated_rejects_zero_repetitions():
+    from src.retraining_cost import measure_repeated
+
+    with pytest.raises(ValueError):
+        measure_repeated(lambda: 42, 0)

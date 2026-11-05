@@ -38,3 +38,40 @@ def measure_callable(
     }
 
     return result, measurements
+import statistics
+
+
+def measure_repeated(
+    function,
+    repetitions=5,
+    *args,
+    **kwargs,
+):
+    """Measure repeated executions and summarize resource consumption."""
+
+    if not isinstance(repetitions, int) or isinstance(repetitions, bool):
+        raise TypeError("repetitions must be an integer.")
+
+    if repetitions < 1:
+        raise ValueError("repetitions must be at least 1.")
+
+    results = []
+    measurements = []
+
+    for _ in range(repetitions):
+        result, metrics = measure_callable(function, *args, **kwargs)
+        results.append(result)
+        measurements.append(metrics)
+
+    summary = {}
+
+    for metric in measurements[0]:
+        values = [item[metric] for item in measurements]
+
+        summary[metric] = {
+            "mean": statistics.mean(values),
+            "median": statistics.median(values),
+            "std": statistics.pstdev(values),
+        }
+
+    return results, summary
