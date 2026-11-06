@@ -28,10 +28,10 @@ RANDOM_STATE = 42
 RETRAINING_COST_F1_EQUIVALENT = 0.08
 
 
-def make_model():
+def make_model(random_state=RANDOM_STATE):
     return make_pipeline(
         StandardScaler(),
-        LogisticRegression(max_iter=2000, random_state=RANDOM_STATE),
+        LogisticRegression(max_iter=2000, random_state=random_state),
     )
 
 
@@ -73,8 +73,8 @@ def apply_shift(X, columns, amount):
     return shifted
 
 
-def run():
-    output_dir = Path("outputs")
+def run(random_state=RANDOM_STATE, output_dir=Path("outputs")):
+    output_dir = Path(output_dir)
     output_dir.mkdir(exist_ok=True)
 
     dataset = load_breast_cancer(as_frame=True)
@@ -87,7 +87,7 @@ def run():
         y,
         test_size=0.35,
         stratify=y,
-        random_state=RANDOM_STATE,
+        random_state=random_state,
     )
 
     # Reference data and remaining experimental data.
@@ -96,7 +96,7 @@ def run():
         y_hold,
         test_size=0.50,
         stratify=y_hold,
-        random_state=RANDOM_STATE,
+        random_state=random_state,
     )
 
     # Monitoring/retraining data and separate future evaluation data.
@@ -105,10 +105,10 @@ def run():
         y_remaining,
         test_size=0.50,
         stratify=y_remaining,
-        random_state=RANDOM_STATE,
+        random_state=random_state,
     )
 
-    baseline_model = make_model()
+    baseline_model = make_model(random_state)
     baseline_model.fit(X_train, y_train)
 
     reference_metrics = evaluate_model(
@@ -188,7 +188,7 @@ def run():
                 X_retrain = pd.concat([X_train, X_current])
                 y_retrain = pd.concat([y_train, y_adapt])
 
-                model = make_model()
+                model = make_model(random_state)
                 model.fit(X_retrain, y_retrain)
             else:
                 model = baseline_model
@@ -251,7 +251,7 @@ def run():
     summary = {
         "dataset": "scikit-learn breast cancer",
         "model": "Logistic Regression",
-        "random_state": RANDOM_STATE,
+        "random_state": random_state,
         "python_version": platform.python_version(),
         "scikit_learn_version": sklearn.__version__,
         "sample_counts": {
@@ -316,8 +316,11 @@ def run():
     print("\nGenerated:")
     print("outputs/drift_experiment_results.csv")
     print("outputs/policy_comparison.csv")
-    print("outputs/drift_experiment_summary.json")
+    print(output_dir / "drift_experiment_summary.json")
+
+    return scenario_frame, comparison_frame
 
 
 if __name__ == "__main__":
     run()
+
