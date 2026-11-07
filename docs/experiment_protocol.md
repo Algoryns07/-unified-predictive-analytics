@@ -59,3 +59,51 @@ validation.
 
 The experiment output is stored in
 `outputs/drift_metric_comparison.csv`.
+
+## Extended Detection Evaluation
+
+The drift detection evaluation includes metrics designed to assess
+performance under class imbalance:
+
+- Accuracy: overall proportion of correct predictions.
+- Precision: proportion of detected drift cases that are genuine drift cases.
+- Recall: proportion of genuine drift cases successfully detected.
+- Specificity: proportion of non-drift cases correctly identified.
+- F1-score: harmonic mean of precision and recall.
+- Balanced accuracy: average of sensitivity and specificity.
+- Matthews correlation coefficient (MCC): a balanced measure
+  incorporating all four confusion-matrix outcomes.
+- Negative predictive value (NPV): proportion of negative predictions
+  that are genuinely negative.
+- False discovery rate (FDR): proportion of positive predictions
+  that are false discoveries.
+
+No single metric is sufficient for evaluating drift detection.
+Interpretation should consider false alarms, missed drift events,
+class imbalance, and the operational consequences of retraining.
+
+## Input Validation
+
+The drift detection module validates PSI bin counts and smoothing
+parameters, statistical significance levels, and non-negative drift
+thresholds. It also checks that the reference and current inputs to
+frame-level comparisons are pandas DataFrames.
+
+The retraining policy validates performance scores and policy
+thresholds before making a decision. These checks are intended to
+prevent invalid configurations from silently affecting results.
+
+## Reproducibility and Evidence Limitations
+
+The experiment runner supports repeated runs with different random
+seeds and summarizes the resulting metrics using mean and standard
+deviation.
+
+The current experiments use controlled synthetic feature shifts on
+the breast cancer dataset. They are useful for testing implementation
+behavior under defined scenarios, but they do not establish
+real-world drift detection performance.
+
+Further validation should include additional datasets, realistic
+temporal evaluation, false-alarm analysis, and comparisons of
+retraining policies under operational constraints.
