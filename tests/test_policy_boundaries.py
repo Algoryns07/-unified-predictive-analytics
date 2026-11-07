@@ -24,3 +24,25 @@ def test_severe_harm_triggers_retraining():
 def test_performance_improvement_does_not_trigger_retraining():
     result = decide(True, 0.85, 0.92)
     assert result["recommended_action"] == "MONITOR"
+
+import pytest
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"reference_f1": 1.2},
+        {"current_f1": -0.1},
+        {"harmful_drop": -0.1},
+        {"severe_drop": 0.01, "harmful_drop": 0.05},
+        {"retraining_cost": float("nan")},
+    ],
+)
+def test_invalid_policy_inputs_are_rejected(kwargs):
+    with pytest.raises(ValueError):
+        decide(**{"drift_detected": True, "reference_f1": 0.95, "current_f1": 0.80, **kwargs})
+
+
+def test_policy_rejects_non_boolean_drift_flag():
+    with pytest.raises(ValueError):
+        decide(1, 0.95, 0.80)
