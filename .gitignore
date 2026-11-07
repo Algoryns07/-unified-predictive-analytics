@@ -1,0 +1,20 @@
+﻿.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+.env
+*.log
+
+# Large datasets and generated model files
+data/raw/*
+data/processed/*
+models/*
+outputs/*
+
+# Keep folder structures
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!models/.gitkeep
+!outputs/.gitkeep
