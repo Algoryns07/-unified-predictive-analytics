@@ -41,3 +41,41 @@ def test_no_common_columns_returns_no_drift():
 
     assert result["any_drift"] is False
     assert result["drifted_features"] == []
+import pytest
+
+
+@pytest.mark.parametrize("bins", [0, 1, -5, 2.5])
+def test_psi_rejects_invalid_bin_counts(bins):
+    with pytest.raises(ValueError):
+        psi([1, 2, 3], [2, 3, 4], bins=bins)
+
+
+@pytest.mark.parametrize("epsilon", [0, -0.1, 0.5, 1])
+def test_psi_rejects_invalid_epsilon(epsilon):
+    with pytest.raises(ValueError):
+        psi([1, 2, 3], [2, 3, 4], epsilon=epsilon)
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"psi_threshold": -0.1},
+        {"psi_threshold": np.nan},
+        {"ks_alpha": 0},
+        {"ks_alpha": 1},
+        {"ks_alpha": -0.1},
+        {"wasserstein_threshold": -0.1},
+        {"wasserstein_threshold": np.inf},
+    ],
+)
+def test_compare_frames_rejects_invalid_thresholds(kwargs):
+    reference = pd.DataFrame({"feature": [1, 2, 3]})
+    current = pd.DataFrame({"feature": [2, 3, 4]})
+
+    with pytest.raises(ValueError):
+        compare_frames(reference, current, **kwargs)
+
+
+def test_compare_frames_rejects_non_dataframe_inputs():
+    with pytest.raises(TypeError):
+        compare_frames([1, 2, 3], [2, 3, 4])

@@ -1,10 +1,30 @@
+﻿import numbers
+
 import numpy as np
 import pandas as pd
 from scipy.stats import ks_2samp, wasserstein_distance
 from statsmodels.stats.multitest import multipletests
 
 
+def _validate_threshold(name, value, minimum=None, maximum=None):
+    if not isinstance(value, numbers.Real) or not np.isfinite(value):
+        raise ValueError(f"{name} must be a finite number.")
+
+    if minimum is not None and value < minimum:
+        raise ValueError(f"{name} must be >= {minimum}.")
+
+    if maximum is not None and value > maximum:
+        raise ValueError(f"{name} must be <= {maximum}.")
+
+
 def psi(reference, current, bins=10, epsilon=1e-6):
+    if isinstance(bins, bool) or not isinstance(bins, numbers.Integral) or bins < 2:
+        raise ValueError("bins must be an integer >= 2.")
+
+    _validate_threshold("epsilon", epsilon, minimum=0)
+    if epsilon <= 0 or epsilon >= 0.5:
+        raise ValueError("epsilon must be strictly between 0 and 0.5.")
+
     ref = np.asarray(reference, dtype=float)
     cur = np.asarray(current, dtype=float)
 
@@ -51,7 +71,6 @@ def compare_feature(reference, current):
     raw_distance = wasserstein_distance(ref, cur)
 
     scale = np.std(ref)
-
     normalized_distance = (
         float(raw_distance / scale) if scale > 0 else float(raw_distance)
     )
@@ -72,13 +91,26 @@ def compare_frames(
     ks_alpha=0.05,
     wasserstein_threshold=0.20
 ):
-    common_columns = reference.columns.intersection(current.columns)
+    _validate_threshold("psi_threshold", psi_threshold, minimum=0)
+    _validate_threshold("ks_alpha", ks_alpha, minimum=0, maximum=1)
+    if ks_alpha == 0 or ks_alpha == 1:
+        raise ValueError("ks_alpha must be strictly between 0 and 1.")
 
+    _validate_threshold(
+        "wasserstein_threshold", wasserstein_threshold, minimum=0
+    )
+
+    if not isinstance(reference, pd.DataFrame):
+        raise TypeError("reference must be a pandas DataFrame.")
+
+    if not isinstance(current, pd.DataFrame):
+        raise TypeError("current must be a pandas DataFrame.")
+
+    common_columns = reference.columns.intersection(current.columns)
     result = {}
 
     for col in common_columns:
-        stats = compare_feature(reference[col], current[col])
-        result[col] = stats
+        result[col] = compare_feature(reference[col], current[col])
 
     if not result:
         return {
@@ -98,7 +130,6 @@ def compare_frames(
 
     for i, col in enumerate(columns):
         stats = result[col]
-
         stats["ks_adjusted_p_value"] = float(adjusted_p_values[i])
 
         stats["drift"] = bool(
