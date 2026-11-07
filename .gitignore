@@ -18,3 +18,15 @@ outputs/*
 !data/processed/.gitkeep
 !models/.gitkeep
 !outputs/.gitkeep
+
+# Ignore datasets and generated artifacts in all applications
+**/data/raw/*
+**/data/processed/*
+**/models/*
+**/outputs/*
+
+# Keep directory placeholders
+!**/data/raw/.gitkeep
+!**/data/processed/.gitkeep
+!**/models/.gitkeep
+!**/outputs/.gitkeep
