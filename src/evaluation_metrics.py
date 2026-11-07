@@ -1,5 +1,5 @@
 ﻿def evaluate_detection(true_drift, predicted_drift):
-    """Evaluate binary drift detection using confusion-matrix metrics."""
+    """Evaluate binary drift detection, including imbalance-aware metrics."""
 
     if len(true_drift) != len(predicted_drift):
         raise ValueError("Input sequences must have equal lengths.")
@@ -34,11 +34,25 @@
     precision = safe_divide(tp, tp + fp)
     recall = safe_divide(tp, tp + fn)
     specificity = safe_divide(tn, tn + fp)
+
     false_positive_rate = safe_divide(fp, fp + tn)
+    negative_predictive_value = safe_divide(tn, tn + fn)
+    false_discovery_rate = safe_divide(fp, fp + tp)
 
     f1 = safe_divide(
         2 * precision * recall,
         precision + recall
+    )
+
+    balanced_accuracy = (recall + specificity) / 2
+
+    mcc_denominator = (
+        (tp + fp) * (tp + fn) * (tn + fp) * (tn + fn)
+    ) ** 0.5
+
+    mcc = safe_divide(
+        tp * tn - fp * fn,
+        mcc_denominator
     )
 
     return {
@@ -51,5 +65,9 @@
         "recall": recall,
         "specificity": specificity,
         "false_positive_rate": false_positive_rate,
+        "negative_predictive_value": negative_predictive_value,
+        "false_discovery_rate": false_discovery_rate,
+        "balanced_accuracy": balanced_accuracy,
+        "mcc": mcc,
         "f1": f1,
     }

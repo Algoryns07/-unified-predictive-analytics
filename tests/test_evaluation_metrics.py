@@ -52,3 +52,19 @@ def test_empty_inputs():
 def test_non_binary_values():
     with pytest.raises(ValueError):
         evaluate_detection([0, 2], [0, 1])
+
+def test_balanced_accuracy_and_mcc():
+    result = evaluate_detection(
+        [0, 0, 0, 1],
+        [0, 1, 0, 1]
+    )
+
+    assert result["balanced_accuracy"] == pytest.approx(5 / 6)
+    assert result["mcc"] > 0
+
+
+def test_all_negative_predictions_have_safe_mcc():
+    result = evaluate_detection([0, 0, 1], [0, 0, 0])
+
+    assert result["mcc"] == 0.0
+    assert result["balanced_accuracy"] == pytest.approx(0.5)
