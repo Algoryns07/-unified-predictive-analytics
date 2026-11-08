@@ -46,3 +46,29 @@ def test_invalid_policy_inputs_are_rejected(kwargs):
 def test_policy_rejects_non_boolean_drift_flag():
     with pytest.raises(ValueError):
         decide(1, 0.95, 0.80)
+
+def test_exact_harmful_drop_boundary_triggers_investigation():
+    result = decide(
+        True,
+        0.90,
+        0.85,
+        harmful_drop=0.05,
+        severe_drop=0.12,
+    )
+
+    assert result["f1_drop"] == pytest.approx(0.05)
+    assert result["impact_class"] == "DRIFT_HARMFUL"
+    assert result["recommended_action"] == "INVESTIGATE"
+
+
+def test_exact_severe_drop_boundary_triggers_retraining():
+    result = decide(
+        True,
+        0.95,
+        0.83,
+        harmful_drop=0.05,
+        severe_drop=0.12,
+    )
+
+    assert result["f1_drop"] == pytest.approx(0.12)
+    assert result["recommended_action"] == "RETRAIN"
