@@ -1,0 +1,33 @@
+﻿# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+
+# IDE and local settings
+.vscode/
+.idea/
+.env
+.env.*
+*.log
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Dataset files
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Generated files
+models/*
+outputs/*
+!models/.gitkeep
+!outputs/.gitkeep
+
+# Streamlit
+.streamlit/secrets.toml
