@@ -79,3 +79,28 @@ def test_compare_frames_rejects_invalid_thresholds(kwargs):
 def test_compare_frames_rejects_non_dataframe_inputs():
     with pytest.raises(TypeError):
         compare_frames([1, 2, 3], [2, 3, 4])
+
+def test_multiple_feature_comparison_reports_adjusted_p_values():
+    reference = pd.DataFrame({
+        "stable_a": np.arange(1000, dtype=float),
+        "stable_b": np.arange(1000, dtype=float),
+        "shifted": np.arange(1000, dtype=float),
+    })
+
+    current = reference.copy()
+    current["shifted"] = current["shifted"] + 500.0
+
+    result = compare_frames(reference, current)
+
+    assert len(result["features"]) == 3
+
+    for statistics in result["features"].values():
+        assert "ks_adjusted_p_value" in statistics
+        assert 0.0 <= statistics["ks_adjusted_p_value"] <= 1.0
+        assert (
+            statistics["ks_adjusted_p_value"]
+            >= statistics["ks_p_value"] - 1e-12
+        )
+
+    assert result["features"]["shifted"]["drift"] is True
+    assert result["any_drift"] is True
