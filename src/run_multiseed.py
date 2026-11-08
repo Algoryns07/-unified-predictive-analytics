@@ -1,6 +1,7 @@
 ﻿"""Run repeated drift experiments and aggregate results across random seeds."""
 
 from pathlib import Path
+import numbers
 import json
 
 import pandas as pd
@@ -37,6 +38,18 @@ def run_multiseed(seeds=DEFAULT_SEEDS, output_dir=Path("outputs/multi_seed")):
 
     if not seeds:
         raise ValueError("At least one random seed is required.")
+
+    for seed in seeds:
+        if (
+            isinstance(seed, bool)
+            or not isinstance(seed, numbers.Integral)
+            or seed < 0
+        ):
+            raise ValueError(
+                "Every random seed must be a non-negative integer."
+            )
+
+    seeds = tuple(int(seed) for seed in seeds)
 
     if len(set(seeds)) != len(seeds):
         raise ValueError("Random seeds must be unique.")

@@ -107,3 +107,15 @@ real-world drift detection performance.
 Further validation should include additional datasets, realistic
 temporal evaluation, false-alarm analysis, and comparisons of
 retraining policies under operational constraints.
+
+## Random-seed input validation
+
+The multi-seed experiment runner accepts non-negative integer seeds.
+It rejects Boolean values, fractional values, negative values, empty
+seed collections, and duplicate seeds before starting experiments.
+Accepted integer seeds are normalized to standard Python integers
+before experiment execution and metadata serialization.
+
+This validation improves experiment configuration reliability.
+It does not replace evaluation across additional datasets, realistic
+temporal windows, or operational false-alarm conditions.
