@@ -16,8 +16,8 @@ from src.interactive_pipeline import (
     analyze_dataset_shift,
 )
 
-st.set_page_config(page_title="Intelligent Predictive Analytics Platform", page_icon="\U0001F4CA", layout="wide")
-st.title("Intelligent Predictive Analytics Platform")
+st.set_page_config(page_title="Predictive Analytics | Data Drift Monitoring", page_icon="\U0001F4CA", layout="wide")
+st.title("Intelligent Predictive Analytics with Data Drift Monitoring")
 st.caption("Interactive dataset exploration, regression prediction and impact-aware retraining assessment | MetroPT application")
 
 with st.sidebar:
@@ -108,7 +108,7 @@ with tab_upload:
             st.dataframe(all_features[columns], use_container_width=True, hide_index=True)
             with st.expander("Detailed all-column statistics"):
                 st.dataframe(all_features, use_container_width=True, hide_index=True)
-        st.caption("Screening thresholds: numeric PSI ≥ 0.20 or BH-adjusted KS q-value < 0.05; categorical total-variation distance ≥ 0.20 or BH-adjusted chi-square q-value < 0.05. Distribution changes do not prove model failure.")
+        st.caption("Screening thresholds: numeric PSI â‰¥ 0.20 or BH-adjusted KS q-value < 0.05; categorical total-variation distance â‰¥ 0.20 or BH-adjusted chi-square q-value < 0.05. Distribution changes do not prove model failure.")
         shared = [c for c in reference.columns if c in incoming.columns]
         targets = [c for c in shared if c in reference.select_dtypes(include="number").columns]
         st.divider()
