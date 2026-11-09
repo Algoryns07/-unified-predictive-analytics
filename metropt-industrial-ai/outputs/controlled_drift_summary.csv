@@ -1,0 +1,4 @@
+scenario,experiments,mean_false_drift_rate_pct,mean_false_performance_rate_pct,mean_false_sustained_rate_pct,feature_detection_rate_pct,performance_detection_rate_pct,mean_post_drift_alert_rate_pct,mean_post_performance_alert_rate_pct,mean_feature_detection_delay,mean_performance_detection_delay,mean_post_error_ratio
+no_drift,5,1.0,0.0,0.0,,,,,,,0.9947578150084656
+covariate_drift,5,0.0,0.0,0.0,100.0,100.0,100.0,86.0,200.0,520.0,1.6588182895166295
+concept_drift,5,0.0,0.0,0.0,20.0,100.0,2.0,100.0,2000.0,400.0,12.789658078726173
