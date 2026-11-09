@@ -1,4 +1,4 @@
-﻿"""Reusable upload-time dataset profiling, regression, and feature-drift utilities."""
+"""Reusable upload-time dataset profiling, regression, and feature-drift utilities."""
 from __future__ import annotations
 
 import numpy as np
@@ -12,6 +12,7 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.inspection import permutation_importance
 
 
 def profile_dataset(frame: pd.DataFrame) -> dict:
@@ -103,6 +104,19 @@ def train_and_predict(reference: pd.DataFrame, incoming: pd.DataFrame, target: s
             metrics["incoming_MAE"] = float(mean_absolute_error(actual[valid], predictions[valid]))
             metrics["incoming_RMSE"] = float(np.sqrt(mean_squared_error(actual[valid], predictions[valid])))
             metrics["incoming_labeled_rows"] = int(valid.sum())
+    # Predictive association on the held-out reference window; not causal evidence.
+    try:
+        importance = permutation_importance(
+            pipeline, holdout[features], holdout[target],
+            scoring="neg_mean_absolute_error", n_repeats=3,
+            random_state=42, n_jobs=1,
+        )
+        metrics["feature_importance"] = {
+            feature: float(max(0.0, value))
+            for feature, value in zip(features, importance.importances_mean)
+        }
+    except Exception:
+        metrics["feature_importance"] = {}
     return result, metrics, features
 
 
@@ -153,6 +167,180 @@ def compare_feature_drift(reference: pd.DataFrame, current: pd.DataFrame, featur
         result["drift_flag"] = (result["PSI"] >= 0.2) | (result["adjusted_q_value"] < 0.05)
         result = result.sort_values(["drift_flag", "PSI"], ascending=[False, False]).reset_index(drop=True)
     return result
+
+
+def analyze_dataset_shift(reference: pd.DataFrame, incoming: pd.DataFrame) -> dict:
+    # Independent all-column comparison; does not depend on the selected target.
+    if reference is None or incoming is None or reference.empty or incoming.empty:
+        raise ValueError("Both datasets must contain at least one row.")
+    if not reference.columns.is_unique or not incoming.columns.is_unique:
+        raise ValueError("Column names must be unique.")
+
+    ref_cols, inc_cols = list(reference.columns), list(incoming.columns)
+    ref_set, inc_set = set(ref_cols), set(inc_cols)
+    rows = []
+
+    for col in ref_cols + [c for c in inc_cols if c not in ref_set]:
+        in_ref, in_inc = col in ref_set, col in inc_set
+        if not in_ref or not in_inc:
+            x = reference[col] if in_ref else None
+            y = incoming[col] if in_inc else None
+            rows.append({
+                "feature": col, "analysis_type": "Schema",
+                "schema_status": "Missing from incoming" if in_ref else "New in incoming",
+                "reference_dtype": str(x.dtype) if in_ref else None,
+                "incoming_dtype": str(y.dtype) if in_inc else None,
+                "reference_missing_pct": float(x.isna().mean()*100) if in_ref else np.nan,
+                "incoming_missing_pct": float(y.isna().mean()*100) if in_inc else np.nan,
+                "reference_unique": int(x.nunique()) if in_ref else 0,
+                "incoming_unique": int(y.nunique()) if in_inc else 0,
+                "PSI": np.nan, "KS_statistic": np.nan, "KS_p_value": np.nan,
+                "Wasserstein": np.nan, "TV_distance": np.nan, "test_p_value": np.nan,
+                "reference_mean": np.nan, "incoming_mean": np.nan,
+                "reference_median": np.nan, "incoming_median": np.nan,
+                "reference_std": np.nan, "incoming_std": np.nan,
+                "reference_min": np.nan, "incoming_min": np.nan,
+                "reference_max": np.nan, "incoming_max": np.nan,
+                "reference_nonfinite_count": np.nan, "incoming_nonfinite_count": np.nan,
+                "drift_flag": True, "severity": "High",
+                "recommended_action": "Review schema compatibility",
+            })
+            continue
+
+        x, y = reference[col], incoming[col]
+        changed_type = str(x.dtype) != str(y.dtype)
+        base = {
+            "feature": col, "reference_dtype": str(x.dtype), "incoming_dtype": str(y.dtype),
+            "schema_status": "Type changed" if changed_type else "Unchanged",
+            "reference_missing_pct": float(x.isna().mean()*100),
+            "incoming_missing_pct": float(y.isna().mean()*100),
+            "reference_unique": int(x.nunique()), "incoming_unique": int(y.nunique()),
+        }
+
+        if pd.api.types.is_numeric_dtype(x) and pd.api.types.is_numeric_dtype(y):
+            x_raw = pd.to_numeric(x, errors="coerce")
+            y_raw = pd.to_numeric(y, errors="coerce")
+            x_values = x_raw.to_numpy(dtype=float, na_value=np.nan)
+            y_values = y_raw.to_numpy(dtype=float, na_value=np.nan)
+            reference_nonfinite = int((~np.isfinite(x_values) & ~np.isnan(x_values)).sum())
+            incoming_nonfinite = int((~np.isfinite(y_values) & ~np.isnan(y_values)).sum())
+            xn = x_raw.replace([np.inf,-np.inf], np.nan).dropna().to_numpy(float)
+            yn = y_raw.replace([np.inf,-np.inf], np.nan).dropna().to_numpy(float)
+            if len(xn) >= 2 and len(yn) >= 2:
+                ks = ks_2samp(xn, yn, alternative="two-sided", method="auto")
+                psi, wd = _psi(xn, yn), float(wasserstein_distance(xn, yn))
+                drift = bool(psi >= .2)
+                severity = "High" if psi >= .5 else ("Moderate" if drift else "Low")
+                rows.append({
+                    **base, "analysis_type": "Numeric", "PSI": psi,
+                    "KS_statistic": float(ks.statistic), "KS_p_value": float(ks.pvalue),
+                    "Wasserstein": wd, "TV_distance": np.nan, "test_p_value": float(ks.pvalue),
+                    "reference_mean": float(np.mean(xn)), "incoming_mean": float(np.mean(yn)),
+                    "reference_median": float(np.median(xn)), "incoming_median": float(np.median(yn)),
+                    "reference_std": float(np.std(xn)), "incoming_std": float(np.std(yn)),
+                    "reference_min": float(np.min(xn)), "incoming_min": float(np.min(yn)),
+                    "reference_max": float(np.max(xn)), "incoming_max": float(np.max(yn)),
+                    "reference_nonfinite_count": reference_nonfinite,
+                    "incoming_nonfinite_count": incoming_nonfinite,
+                    "drift_flag": drift, "severity": severity,
+                    "recommended_action": "Investigate numeric distribution shift" if drift else "Routine monitoring",
+                })
+            else:
+                rows.append({
+                    **base, "analysis_type": "Numeric", "PSI": np.nan,
+                    "KS_statistic": np.nan, "KS_p_value": np.nan, "Wasserstein": np.nan,
+                    "TV_distance": np.nan, "test_p_value": np.nan,
+                    "reference_mean": np.nan, "incoming_mean": np.nan,
+                    "reference_median": np.nan, "incoming_median": np.nan,
+                    "reference_std": np.nan, "incoming_std": np.nan,
+                    "reference_min": np.nan, "incoming_min": np.nan,
+                    "reference_max": np.nan, "incoming_max": np.nan,
+                    "reference_nonfinite_count": reference_nonfinite,
+                    "incoming_nonfinite_count": incoming_nonfinite,
+                    "drift_flag": False, "severity": "Insufficient data",
+                    "recommended_action": "Collect at least two valid values per dataset",
+                })
+        else:
+            xs = x.astype("string").fillna("<MISSING>")
+            ys = y.astype("string").fillna("<MISSING>")
+            top = set(xs.value_counts().head(100).index) | set(ys.value_counts().head(100).index)
+            xs, ys = xs.where(xs.isin(top), "<OTHER>"), ys.where(ys.isin(top), "<OTHER>")
+            cats = sorted(set(xs.unique()) | set(ys.unique()))
+            xp = xs.value_counts(normalize=True).reindex(cats, fill_value=0).to_numpy()
+            yp = ys.value_counts(normalize=True).reindex(cats, fill_value=0).to_numpy()
+            tv = float(.5 * np.abs(xp-yp).sum())
+            table = np.vstack([
+                xs.value_counts().reindex(cats, fill_value=0).to_numpy(),
+                ys.value_counts().reindex(cats, fill_value=0).to_numpy(),
+            ])
+            pv = np.nan
+            if len(cats) > 1:
+                try:
+                    from scipy.stats import chi2_contingency
+                    _, pv, _, _ = chi2_contingency(table, correction=False)
+                    pv = float(pv)
+                except Exception:
+                    pv = np.nan
+            drift = bool(tv >= .2)
+            severity = "High" if tv >= .5 else ("Moderate" if drift else "Low")
+            rows.append({
+                **base, "analysis_type": "Categorical", "PSI": np.nan,
+                "KS_statistic": np.nan, "KS_p_value": np.nan, "Wasserstein": np.nan,
+                "TV_distance": tv, "test_p_value": pv,
+                "reference_mean": np.nan, "incoming_mean": np.nan,
+                "reference_median": np.nan, "incoming_median": np.nan,
+                "reference_std": np.nan, "incoming_std": np.nan,
+                "reference_min": np.nan, "incoming_min": np.nan,
+                "reference_max": np.nan, "incoming_max": np.nan,
+                "reference_nonfinite_count": np.nan, "incoming_nonfinite_count": np.nan,
+                "drift_flag": drift, "severity": severity,
+                "recommended_action": "Review category mix and unseen values" if drift else "Routine monitoring",
+            })
+
+    frame = pd.DataFrame(rows)
+    if not frame.empty:
+        frame["adjusted_q_value"] = np.nan
+        pvals = pd.to_numeric(frame["test_p_value"], errors="coerce")
+        valid = pvals.notna()
+        if valid.any():
+            frame.loc[valid, "adjusted_q_value"] = _bh_adjust(pvals[valid].to_numpy())
+        numeric_effect = pd.to_numeric(frame["PSI"], errors="coerce").ge(0.2)
+        categorical_effect = pd.to_numeric(frame["TV_distance"], errors="coerce").ge(0.2)
+        statistical_significance = pd.to_numeric(frame["adjusted_q_value"], errors="coerce").lt(0.05)
+        statistical_rows = frame["analysis_type"].isin(["Numeric", "Categorical"])
+        statistical_drift = statistical_rows & (numeric_effect.fillna(False) | categorical_effect.fillna(False) | statistical_significance.fillna(False))
+        frame.loc[statistical_rows, "drift_flag"] = statistical_drift.loc[statistical_rows]
+        frame.loc[statistical_rows & statistical_drift, "severity"] = "Moderate"
+        frame.loc[statistical_rows & ~statistical_drift, "severity"] = "Low"
+        frame.loc[statistical_rows & statistical_drift, "recommended_action"] = "Investigate statistically adjusted distribution shift"
+        frame.loc[statistical_rows & ~statistical_drift, "recommended_action"] = "Routine monitoring"
+        frame["missingness_change_pp"] = frame["incoming_missing_pct"] - frame["reference_missing_pct"]
+        missing_change = frame["missingness_change_pp"].abs() >= 10
+        type_change = frame["schema_status"].ne("Unchanged")
+        frame.loc[missing_change | type_change, "drift_flag"] = True
+        frame.loc[missing_change, "severity"] = "Moderate"
+        frame.loc[missing_change, "recommended_action"] = "Investigate missing-value-rate change"
+        frame.loc[type_change, "recommended_action"] = "Review schema/type compatibility"
+        frame = frame.sort_values(["drift_flag", "feature"], ascending=[False, True]).reset_index(drop=True)
+
+    return {
+        "features": frame,
+        "schema": {
+            "reference_only_columns": [c for c in ref_cols if c not in inc_set],
+            "incoming_only_columns": [c for c in inc_cols if c not in ref_set],
+            "shared_columns": [c for c in ref_cols if c in inc_set],
+            "type_changed_columns": [c for c in ref_cols if c in inc_set and str(reference[c].dtype) != str(incoming[c].dtype)],
+        },
+        "reference_rows": int(len(reference)), "incoming_rows": int(len(incoming)),
+        "reference_columns": len(ref_cols), "incoming_columns": len(inc_cols),
+        "reference_duplicates": int(reference.duplicated().sum()),
+        "incoming_duplicates": int(incoming.duplicated().sum()),
+        "reference_duplicate_rate_pct": float(reference.duplicated().mean() * 100),
+        "incoming_duplicate_rate_pct": float(incoming.duplicated().mean() * 100),
+        "reference_missing_cells": int(reference.isna().sum().sum()),
+        "incoming_missing_cells": int(incoming.isna().sum().sum()),
+    }
+
 
 from math import ceil, isfinite
 
@@ -243,17 +431,20 @@ def recommend_retraining(
             )
 
     else:
-        status = "CONTINUE"
-        recommendation = (
-            "Continue using the current model and monitor future data."
-        )
-
         if not performance_verified:
+            status = "INSUFFICIENT_EVIDENCE"
+            recommendation = (
+                "Collect labelled incoming observations before concluding that the model remains reliable."
+            )
             reason = (
-                "No monitored feature crossed the drift threshold. "
-                "Incoming performance is not fully verified."
+                "No monitored feature crossed the drift threshold, but incoming prediction performance "
+                "has not been verified with enough labelled observations."
             )
         else:
+            status = "CONTINUE"
+            recommendation = (
+                "Continue using the current model and monitor future data."
+            )
             reason = (
                 "Neither monitored feature drift nor significant "
                 "performance degradation was detected."
