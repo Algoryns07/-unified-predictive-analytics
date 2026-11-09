@@ -115,7 +115,7 @@ with tab_upload:
         m1,m2,m3,m4 = st.columns(4)
         m1.metric("Validation MAE", f"{metrics['MAE']:.4f}")
         m2.metric("Validation RMSE", f"{metrics['RMSE']:.4f}")
-        m3.metric("Validation R?", f"{metrics['R2']:.4f}")
+        m3.metric("Validation R-squared", f"{metrics['R2']:.4f}")
         m4.metric("Incoming rows predicted", f"{len(result['predictions']):,}")
 
         if "incoming_MAE" in metrics:
@@ -145,7 +145,7 @@ with tab_upload:
             d3.metric("Flagged feature share", f"{100*drifted/len(drift):.1f}%")
             st.dataframe(drift, use_container_width=True)
             st.plotly_chart(px.bar(drift, x="feature", y="PSI", color="drift_flag", title="Population Stability Index by feature"), use_container_width=True)
-            st.caption("Exploratory thresholds: PSI ? 0.20 or Benjamini?Hochberg adjusted KS q-value < 0.05. Drift alone does not prove accuracy loss.")
+            st.caption("Exploratory thresholds: PSI >= 0.20 or Benjamini-Hochberg adjusted KS q-value < 0.05. Drift alone does not prove accuracy loss.")
 
         st.divider()
         st.subheader("5. Impact-aware retraining recommendation")
@@ -181,9 +181,9 @@ with tab_upload:
         )
 
         if decision["status"] == "RETRAIN_CANDIDATE":
-            st.error("RETRAINING CANDIDATE ? challenger evaluation recommended")
+            st.error("RETRAINING CANDIDATE - challenger evaluation recommended")
         elif decision["status"] == "MONITOR":
-            st.warning("MONITOR ? collect additional evidence before retraining")
+            st.warning("MONITOR - collect additional evidence before retraining")
         else:
             st.success("CONTINUE ? no current evidence justifies retraining")
 
@@ -235,7 +235,7 @@ with tab_upload:
 
         with cost_c:
             retraining_cost = st.number_input(
-                "Cost per retraining (?)",
+                "Cost per retraining (INR)",
                 min_value=0.0,
                 value=2500.0,
                 step=500.0,
@@ -243,7 +243,7 @@ with tab_upload:
 
         with cost_d:
             monitoring_cost = st.number_input(
-                "Monitoring cost per window (?)",
+                "Monitoring cost per window (INR)",
                 min_value=0.0,
                 value=50.0,
                 step=10.0,
@@ -258,11 +258,11 @@ with tab_upload:
         )
 
         cost_m1, cost_m2, cost_m3 = st.columns(3)
-        cost_m1.metric("Periodic policy cost", f"?{costs['periodic_total_cost']:,.2f}")
-        cost_m2.metric("Impact-aware policy cost", f"?{costs['adaptive_total_cost']:,.2f}")
+        cost_m1.metric("Periodic policy cost", f"INR {costs['periodic_total_cost']:,.2f}")
+        cost_m2.metric("Impact-aware policy cost", f"INR {costs['adaptive_total_cost']:,.2f}")
         cost_m3.metric(
             "Estimated operational savings",
-            f"?{costs['estimated_savings']:,.2f}",
+            f"INR {costs['estimated_savings']:,.2f}",
             f"{costs['estimated_savings_percentage']:.1f}%",
         )
 
