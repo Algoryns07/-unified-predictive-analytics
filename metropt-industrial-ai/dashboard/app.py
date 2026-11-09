@@ -1,5 +1,6 @@
 from pathlib import Path
 import sys
+import hashlib
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -12,6 +13,7 @@ from src.interactive_pipeline import (
     compare_feature_drift,
     recommend_retraining,
     estimate_retraining_costs,
+    analyze_dataset_shift,
 )
 
 st.set_page_config(page_title="Intelligent Predictive Analytics Platform", page_icon="\U0001F4CA", layout="wide")
@@ -34,6 +36,17 @@ with tab_upload:
         reference_file = st.file_uploader("Reference dataset (CSV)", type=["csv"], key="reference_csv", help="Historical data used to fit and validate the model.")
     with c2:
         incoming_file = st.file_uploader("Incoming dataset (CSV)", type=["csv"], key="incoming_csv", help="New data for predictions and drift comparison.")
+
+    if reference_file is not None and incoming_file is not None:
+        _reference_bytes = reference_file.getvalue()
+        _incoming_bytes = incoming_file.getvalue()
+        _upload_signature = hashlib.sha256(_reference_bytes + b"\\0" + _incoming_bytes).hexdigest()
+        _previous_result = st.session_state.get("interactive_result")
+        if _previous_result and _previous_result.get("upload_signature") != _upload_signature:
+            st.session_state.pop("interactive_result", None)
+    else:
+        _upload_signature = None
+        st.session_state.pop("interactive_result", None)
 
     if reference_file is not None:
         try:
@@ -69,6 +82,33 @@ with tab_upload:
         incoming = None
 
     if reference is not None and incoming is not None:
+        dataset_report = analyze_dataset_shift(reference, incoming)
+        all_features = dataset_report["features"]
+        st.divider()
+        st.subheader("Whole-dataset intelligence")
+        st.caption("Independent of the selected prediction target: every column in both uploaded files is assessed.")
+        q1, q2, q3, q4 = st.columns(4)
+        q1.metric("Shared columns", len(dataset_report["schema"]["shared_columns"]))
+        q2.metric("Columns flagged", int(all_features["drift_flag"].sum()) if not all_features.empty else 0)
+        q3.metric("Reference duplicates", f"{dataset_report['reference_duplicates']:,}")
+        q4.metric("Incoming duplicates", f"{dataset_report['incoming_duplicates']:,}")
+        if dataset_report["schema"]["reference_only_columns"]:
+            st.warning("Missing from incoming: " + ", ".join(dataset_report["schema"]["reference_only_columns"]))
+        if dataset_report["schema"]["incoming_only_columns"]:
+            st.info("New in incoming: " + ", ".join(dataset_report["schema"]["incoming_only_columns"]))
+        if dataset_report["schema"]["type_changed_columns"]:
+            st.warning("Changed data types: " + ", ".join(dataset_report["schema"]["type_changed_columns"]))
+        if not all_features.empty:
+            columns = [
+                "feature", "analysis_type", "schema_status", "severity",
+                "reference_missing_pct", "incoming_missing_pct",
+                "PSI", "KS_p_value", "Wasserstein", "TV_distance",
+                "drift_flag", "recommended_action",
+            ]
+            st.dataframe(all_features[columns], use_container_width=True, hide_index=True)
+            with st.expander("Detailed all-column statistics"):
+                st.dataframe(all_features, use_container_width=True, hide_index=True)
+        st.caption("Screening thresholds: numeric PSI ≥ 0.20 or BH-adjusted KS q-value < 0.05; categorical total-variation distance ≥ 0.20 or BH-adjusted chi-square q-value < 0.05. Distribution changes do not prove model failure.")
         shared = [c for c in reference.columns if c in incoming.columns]
         targets = [c for c in shared if c in reference.select_dtypes(include="number").columns]
         st.divider()
@@ -92,12 +132,14 @@ with tab_upload:
                         prediction_df, metrics, features = train_and_predict(reference, incoming, target, model_name, test_fraction)
                         numeric_features = [f for f in features if f in reference.select_dtypes(include="number").columns and f in incoming.select_dtypes(include="number").columns]
                         drift_df = compare_feature_drift(reference, incoming, numeric_features)
-                        decision = recommend_retraining(drift_df, metrics)
+                        decision = recommend_retraining(dataset_report["features"], metrics)
 
                     st.session_state["interactive_result"] = {
+                        "upload_signature": _upload_signature,
                         "predictions": prediction_df,
                         "metrics": metrics,
                         "drift": drift_df,
+                        "dataset_report": dataset_report,
                         "decision": decision,
                         "target": target,
                         "model": model_name,
@@ -145,7 +187,7 @@ with tab_upload:
             d3.metric("Flagged feature share", f"{100*drifted/len(drift):.1f}%")
             st.dataframe(drift, use_container_width=True)
             st.plotly_chart(px.bar(drift, x="feature", y="PSI", color="drift_flag", title="Population Stability Index by feature"), use_container_width=True)
-            st.caption("Exploratory thresholds: PSI >= 0.20 or Benjamini-Hochberg adjusted KS q-value < 0.05. Drift alone does not prove accuracy loss.")
+            st.caption("Exploratory thresholds: PSI >= 0.20 or total-variation distance >= 0.20, or Benjamini-Hochberg adjusted q-value < 0.05. Drift alone does not prove accuracy loss.")
 
         st.divider()
         st.subheader("5. Impact-aware retraining recommendation")
@@ -173,22 +215,52 @@ with tab_upload:
                 key="minimum_labels",
             )
 
+        full_dataset_features = result.get("dataset_report", {}).get("features", drift)
         decision = recommend_retraining(
-            drift,
+            full_dataset_features,
             metrics,
             performance_threshold=degradation_threshold / 100.0,
             minimum_labeled_rows=int(minimum_labels),
         )
 
         if decision["status"] == "RETRAIN_CANDIDATE":
-            st.error("RETRAINING CANDIDATE - challenger evaluation recommended")
+            st.error("## RETRAINING RECOMMENDED")
+            st.markdown("**Action:** Train and evaluate a challenger model. Do not replace the current model without independent validation.")
         elif decision["status"] == "MONITOR":
-            st.warning("MONITOR - collect additional evidence before retraining")
+            st.warning("## MONITOR - DO NOT RETRAIN YET")
+            st.markdown("**Action:** Investigate flagged columns and collect labelled observations.")
+        elif decision["status"] == "INSUFFICIENT_EVIDENCE":
+            st.info("## INSUFFICIENT EVIDENCE")
+            st.markdown("**Action:** Collect enough labelled incoming observations to verify model performance.")
         else:
-            st.success("CONTINUE ? no current evidence justifies retraining")
+            st.success("## DO NOT RETRAIN")
+            st.markdown("**Action:** Keep the current model and continue routine monitoring.")
 
         st.write("**Recommendation:**", decision["recommendation"])
         st.write("**Reason:**", decision["reason"])
+
+        st.markdown("#### Feature investigation priorities")
+        ranked = result.get("dataset_report", {}).get("features", pd.DataFrame()).copy()
+        if not ranked.empty:
+            importance = metrics.get("feature_importance", {})
+            ranked["model_importance"] = ranked["feature"].map(importance).fillna(0.0)
+            ranked["attention_score"] = (
+                ranked["drift_flag"].astype(float)
+                + ranked["model_importance"].rank(pct=True).fillna(0.0) * 0.5
+                + (ranked["missingness_change_pp"].abs().fillna(0.0) / 100.0).clip(upper=1.0)
+            )
+            ranked = ranked.sort_values(["attention_score", "drift_flag"], ascending=[False, False])
+            st.dataframe(
+                ranked[[
+                    "feature", "severity", "drift_flag", "model_importance",
+                    "missingness_change_pp", "attention_score", "recommended_action",
+                ]].head(30),
+                use_container_width=True,
+                hide_index=True,
+            )
+            st.caption("Permutation importance is predictive association, not causality. The attention score prioritises investigation; it does not independently trigger retraining.")
+        else:
+            st.info("No comparable columns were available for feature ranking.")
 
         evidence_a, evidence_b, evidence_c = st.columns(3)
         evidence_a.metric("Drifted features", decision["drifted_features"])
