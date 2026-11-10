@@ -74,7 +74,7 @@ def train_and_predict(reference: pd.DataFrame, incoming: pd.DataFrame, target: s
         transformers.append(("num", Pipeline([("imputer", SimpleImputer(strategy="median", keep_empty_features=True)), ("scale", StandardScaler())]), numeric))
     if categorical:
         transformers.append(("cat", Pipeline([("imputer", SimpleImputer(strategy="most_frequent", keep_empty_features=True)), ("onehot", OneHotEncoder(handle_unknown="ignore"))]), categorical))
-    preprocess = ColumnTransformer(transformers, remainder="drop")
+    preprocess = ColumnTransformer(transformers, remainder="drop", sparse_threshold=0.0)
     models = {
         "Linear Regression": LinearRegression(),
         "Decision Tree": DecisionTreeRegressor(max_depth=12, min_samples_leaf=3, random_state=42),
