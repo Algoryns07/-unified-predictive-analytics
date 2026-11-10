@@ -69,3 +69,11 @@ Controlled synthetic drift experiments do not establish real-world drift perform
 ## License
 
 No open-source license is provided. All rights reserved.
+
+## Live Application
+
+**Access the deployed dashboard:**
+
+https://impact-aware-ml.streamlit.app/
+
+The application is hosted on Streamlit Community Cloud.
