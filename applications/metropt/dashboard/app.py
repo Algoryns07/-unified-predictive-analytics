@@ -16,9 +16,9 @@ from src.interactive_pipeline import (
     analyze_dataset_shift,
 )
 
-st.set_page_config(page_title="Predictive Analytics | Data Drift Monitoring", page_icon="\U0001F4CA", layout="wide")
-st.title("Intelligent Predictive Analytics with Data Drift Monitoring")
-st.caption("Interactive dataset exploration, regression prediction and impact-aware retraining assessment | MetroPT application")
+st.set_page_config(page_title="Intelligent Data Drift Assessment and Predictive Analytics", page_icon="\U0001F4CA", layout="wide")
+st.title("Intelligent Data Drift Assessment, Predictive Analytics & Cost-Sensitive Model Retraining Platform")
+st.caption("An interactive platform for monitoring data distribution changes, evaluating their impact on predictive models, and making cost-aware model retraining decisions.")
 
 with st.sidebar:
     st.header("How to use")
@@ -109,7 +109,7 @@ with tab_upload:
             st.dataframe(all_features[columns], use_container_width=True, hide_index=True)
             with st.expander("Detailed all-column statistics"):
                 st.dataframe(all_features, use_container_width=True, hide_index=True)
-        st.caption("Screening thresholds: numeric PSI Ã¢â€°Â¥ 0.20 or BH-adjusted KS q-value < 0.05; categorical total-variation distance Ã¢â€°Â¥ 0.20 or BH-adjusted chi-square q-value < 0.05. Distribution changes do not prove model failure.")
+        st.caption("Screening thresholds: numeric PSI >= 0.20 or BH-adjusted KS q-value < 0.05; categorical total-variation distance >= 0.20 or BH-adjusted chi-square q-value < 0.05. Distribution changes do not prove model failure.")
         shared = [c for c in reference.columns if c in incoming.columns]
         targets = [c for c in shared if c in reference.select_dtypes(include="number").columns]
         st.divider()
@@ -489,10 +489,7 @@ with tab_impact:
                         else "Not detected"
                     )
 
-                    st.caption(
-                        "Thresholds: PSI â‰¥ 0.10, BH-adjusted KS "
-                        "p-value < 0.05, or normalized Wasserstein â‰¥ 0.20."
-                    )
+                    st.caption("Thresholds: PSI >= 0.10, BH-adjusted KS p-value < 0.05, or normalized Wasserstein >= 0.20.")
 
             except Exception as exc:
                 st.error(f"Drift comparison failed: {exc}")
@@ -563,7 +560,7 @@ with tab_impact:
 
     st.warning(
         "These experiments use controlled synthetic shifts on the "
-        "breast cancer dataset. They are not real-world MetroPT evidence."
+        "breast cancer dataset. They are not real-world industrial evidence."
     )
 
     seed_text = st.text_input(
@@ -641,8 +638,8 @@ with tab_impact:
 
             st.caption(
                 f"Seeds: {summary.get('random_seeds', [])} | "
-                f"Scenarios: {summary.get('number_of_scenarios', 'â€”')} | "
-                f"Policies: {summary.get('number_of_policies', 'â€”')}"
+                f"Scenarios: {summary.get('number_of_scenarios', 'not available')} | "
+                f"Policies: {summary.get('number_of_policies', 'not available')}"
             )
 
             st.info(summary.get("note", "Controlled experiment results."))
