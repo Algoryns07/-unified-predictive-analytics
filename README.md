@@ -1,211 +1,177 @@
-﻿# Impact-Aware Data Drift Assessment & Predictive Analytics Platform
+# Impact-Aware Data Drift Assessment and Predictive Analytics Platform
 
-An interactive machine-learning platform for monitoring data distribution changes, assessing their potential impact, and supporting cost-sensitive model-retraining decisions. The platform also includes a separate MetroPT industrial predictive-analytics application.
+An interactive machine learning platform for predictive analytics, data drift monitoring, impact assessment, and cost-sensitive model retraining.
 
-<p align="center">
-  <a href="https://impact-aware-ml.streamlit.app/">
-    <strong>ðŸš€ OPEN THE LIVE DASHBOARD</strong>
-  </a>
-</p>
+## Live Dashboard
 
-**Live application:** https://impact-aware-ml.streamlit.app/  
-**Source code:** https://github.com/Algoryns07/-unified-predictive-analytics
+**Open the live application:** https://impact-aware-ml.streamlit.app/
+
+**GitHub repository:** https://github.com/Algoryns07/-unified-predictive-analytics
 
 ---
 
 ## 1. Project Overview
 
-Machine-learning models can become less reliable when incoming data changes over time. Detecting a statistical change is not, by itself, enough to decide whether a model should be retrained. Monitoring systems should also consider the possible impact of the change and the cost of taking action.
+Machine learning models may become less reliable when incoming data changes over time. Monitoring these changes and deciding when model retraining is necessary are important challenges in machine learning systems.
 
-This project provides an interactive platform for exploring that workflow:
+This project provides an interactive platform to explore predictive analytics, data drift measurement, impact assessment, and cost-sensitive retraining decisions.
 
-1. Prepare and validate incoming data.
-2. Generate predictions using supported machine-learning workflows.
-3. measure changes between reference and incoming data.
-4. Assess detected changes in an impact-aware context.
-5. Compare cost-sensitive retraining policies.
-6. Inspect experiment outputs and evaluation results.
+The platform integrates two application components:
 
-The repository brings together two application tracks in one dashboard. Their datasets, experiments, and results remain separate; unrelated datasets are not combined into a single training dataset.
+1. Impact-Aware Data Drift Monitoring.
+2. MetroPT Industrial Predictive Analytics.
 
-## 2. Live Dashboard
+Both components are accessible through a unified dashboard. Their datasets and experimental results remain separate.
 
-### [ðŸš€ Launch Impact-Aware Data Drift Assessment Dashboard](https://impact-aware-ml.streamlit.app/)
+## 2. Main Features
 
-The deployed Streamlit application provides four main sections:
+- Upload supported datasets and explore predictions.
+- Perform regression-based predictive analytics.
+- Measure changes in incoming data distributions.
+- Evaluate feature-level data drift.
+- Assess the potential impact of detected changes.
+- Compare cost-sensitive model retraining policies.
+- Review saved experimental results.
+- Explore results through an interactive dashboard.
 
-| Dashboard section | Purpose |
-|---|---|
-| **Upload & Predict** | Upload supported data and explore model predictions. |
-| **Existing Experiments** | View available experiment outputs and comparison results. |
-| **Method & Limitations** | Review the methods, assumptions, and limitations. |
-| **Impact-Aware Monitoring** | Explore drift measurements, impact assessment, and cost-sensitive retraining results. |
+## 3. Machine Learning Methods
 
-If the application has been idle, allow a short time for the hosted service to start.
+### Linear Regression
 
-## 3. Application Components
+Linear Regression is used in the regression-based predictive analytics workflow. It estimates continuous target values using input features and provides an interpretable baseline for understanding relationships between variables.
 
-### A. Impact-Aware Data Drift Monitoring
+### Data Drift Detection
 
-This component explores how incoming data differs from a reference dataset and how monitoring results can inform retraining decisions.
+The monitoring component uses statistical and distance-based measurements to identify changes between reference data and incoming data.
 
-Key areas include:
-- Statistical and distance-based feature-drift measurements.
-- Impact-aware interpretation of detected changes.
-- No-shift control and false-positive considerations.
-- Comparison of cost-sensitive retraining policies.
-- Experiment-result inspection.
+### Impact-Aware Assessment
 
-### B. MetroPT Industrial Predictive Analytics
+The platform considers the potential significance of detected changes rather than treating every statistical difference as equally important.
 
-This component provides a separate industrial predictive-analytics workflow using the MetroPT application data and its associated experiments.
+### Cost-Sensitive Retraining
 
-The two application tracks are presented through the same dashboard, but their datasets and experimental results are not merged.
+Different retraining policies are evaluated by considering potential model benefits and associated retraining costs.
 
-## 4. Conceptual Workflow
+## 4. Dashboard Sections
 
-```text
-Reference Data + Incoming Data
-              |
-              v
-      Data Preparation
-              |
-              v
-       Model Prediction
-              |
-              v
-       Drift Measurement
-              |
-              v
-       Impact Assessment
-              |
-              v
-   Cost-Sensitive Decision
-              |
-              v
- Retraining Policy Evaluation
-              |
-              v
-       Results Review
-```
+| Section | Description |
+| --- | --- |
+| Upload and Predict | Upload supported data and explore predictions. |
+| Existing Experiments | Review saved experiment outputs and comparisons. |
+| Method and Limitations | Understand methods, assumptions, and limitations. |
+| Impact-Aware Monitoring | Explore drift measurements and retraining analysis. |
 
-This diagram represents the overall monitoring concept. The exact operations and outputs depend on the selected application and experiment.
+## 5. Project Workflow
 
-## 5. Machine-Learning Methods
+1. Data input and validation.
+2. Data preparation.
+3. Model prediction.
+4. Data drift measurement.
+5. Impact assessment.
+6. Cost-sensitive retraining decision.
+7. Evaluation and experiment review.
 
-The platform uses **Linear Regression** in its regression-based predictive analytics workflow. Linear Regression estimates continuous target values from input features and provides an interpretable baseline for understanding relationships between input variables and predicted outcomes.
-
-The project also incorporates:
-
-- **Statistical Drift Detection:** Measures changes in incoming data distributions.
-- **Impact-Aware Assessment:** Evaluates the potential significance of detected changes.
-- **Cost-Sensitive Retraining:** Compares retraining decisions while considering associated costs.
-
-Linear Regression is a predictive modelling method; it is not the drift-detection algorithm.
 ## 6. Technology Stack
 
-- **Python** â€” application and machine-learning implementation
-- **Streamlit** â€” interactive web dashboard
-- **pandas, NumPy** â€” data processing
-- **scikit-learn** â€” machine-learning workflows
-- **SciPy, statsmodels** â€” statistical analysis
-- **Matplotlib, Seaborn, Plotly** â€” visualisation
-- **XGBoost** â€” supported gradient-boosting workflows
-- **pytest** â€” automated testing
+- Python
+- Streamlit
+- NumPy
+- pandas
+- scikit-learn
+- SciPy
+- statsmodels
+- Matplotlib
+- Seaborn
+- Plotly
+- XGBoost
+- pytest
 
-The full dependency list is maintained in [`requirements.txt`](requirements.txt).
+Refer to `requirements.txt` for the dependency list.
 
 ## 7. Repository Structure
 
-```text
-applications/
-â”œâ”€â”€ metropt/
-â”‚   â””â”€â”€ dashboard/
-â”‚       â””â”€â”€ app.py          # Main Streamlit dashboard entry point
-â””â”€â”€ impact_aware/
-    â””â”€â”€ outputs/            # Impact-Aware experiment result files
-```
+The main dashboard entry point is:
 
-The repository also includes application source code, configuration, documentation, tests, and experiment outputs. The structure above highlights the principal application locations rather than listing every file.
+`applications/metropt/dashboard/app.py`
 
-## 8. Run the Project Locally
+The repository also contains application source code, configuration files, documentation, automated tests, and experiment outputs for the individual application components.
+
+## 8. Run Locally
 
 ### Requirements
 
 - Python 3.12
 - Git
-- A compatible environment for the packages listed in `requirements.txt`
 
-### Step 1 â€” Clone the repository
+### Clone the repository
 
 ```bash
 git clone https://github.com/Algoryns07/-unified-predictive-analytics.git
 cd -unified-predictive-analytics
 ```
 
-### Step 2 â€” Create and activate a virtual environment
+### Create and activate a virtual environment
 
-**Windows PowerShell**
+Windows PowerShell:
 
 ```powershell
 py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
-**macOS / Linux**
+macOS or Linux:
 
 ```bash
 python3.12 -m venv .venv
 source .venv/bin/activate
 ```
 
-### Step 3 â€” Install dependencies
+### Install dependencies
 
 ```bash
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### Step 4 â€” Launch the dashboard
+### Run the dashboard
 
 ```bash
 streamlit run applications/metropt/dashboard/app.py
 ```
 
-Open the local address printed by Streamlit, normally `http://localhost:8501`.
+Open the local address provided by Streamlit, usually `http://localhost:8501`.
 
 ## 9. Deployment
 
-The dashboard is hosted on **Streamlit Community Cloud**.
+The application is hosted using Streamlit Community Cloud.
 
-- **Dashboard URL:** [https://impact-aware-ml.streamlit.app/](https://impact-aware-ml.streamlit.app/)
-- **GitHub repository:** [https://github.com/Algoryns07/-unified-predictive-analytics](https://github.com/Algoryns07/-unified-predictive-analytics)
-- **Deployment branch:** `cloud-preview`
-- **Application entry point:** `applications/metropt/dashboard/app.py`
+- Dashboard: https://impact-aware-ml.streamlit.app/
+- Repository: https://github.com/Algoryns07/-unified-predictive-analytics
+- Deployment branch: `cloud-preview`
+- Application entry point: `applications/metropt/dashboard/app.py`
 
-## 10. Experimental Considerations and Limitations
+## 10. Experimental Limitations
 
-Results must be interpreted in the context of the dataset, experimental setup, and assumptions used.
-
-- Controlled or simulated drift is useful for testing system behaviour, but it is not evidence of naturally occurring real-world drift.
-- A drift alert does not automatically establish that predictive performance has deteriorated or that retraining is required.
-- False-positive alerts and no-shift control scenarios are important when evaluating drift detectors.
-- Retraining policies should be assessed using explicit evaluation protocols and cost assumptions.
-- Results from separate datasets and application tracks should not be treated as though they came from one shared training dataset.
-- The dashboard is an academic and experimental platform; its outputs should not be used as operational decisions without further validation.
+- Simulated drift experiments are controlled tests and should not be presented as evidence of naturally occurring real-world drift.
+- A drift alert does not automatically mean that model performance has deteriorated.
+- False-positive alerts and no-shift control scenarios must be considered.
+- Retraining decisions depend on the evaluation protocol and cost assumptions.
+- Results from separate datasets should be interpreted independently.
+- Further validation is required before using experimental results for operational decisions.
 
 ## 11. Reproducibility
 
-For reproducible comparisons, record the dataset, preprocessing steps, model and detector settings, random seed, evaluation period, and retraining-policy assumptions. Where repeated runs are available, report variability rather than relying on a single result.
+For meaningful comparisons, record the dataset, preprocessing steps, model settings, detector settings, random seed, evaluation period, and retraining-policy assumptions.
 
-## 12. Usage and License
+## 12. License and Usage
 
-This repository is maintained as an academic machine-learning project. No open-source license has been provided. Unless a license is added by the repository owner, the code is not granted open-source reuse permissions by default. Please contact the repository owner before reuse or redistribution.
+This repository is maintained as an academic machine learning project.
+
+No open-source license has been provided. Reuse and redistribution are not granted by default.
 
 ---
 
-### Quick Access
+## Quick Links
 
-- **[ðŸš€ Open the Live Dashboard](https://impact-aware-ml.streamlit.app/)**
-- **[View the GitHub Repository](https://github.com/Algoryns07/-unified-predictive-analytics)**
-
+- Live Dashboard: https://impact-aware-ml.streamlit.app/
+- GitHub Repository: https://github.com/Algoryns07/-unified-predictive-analytics
