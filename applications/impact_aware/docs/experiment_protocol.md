@@ -119,3 +119,8 @@ before experiment execution and metadata serialization.
 This validation improves experiment configuration reliability.
 It does not replace evaluation across additional datasets, realistic
 temporal windows, or operational false-alarm conditions.
+
+## Multi-seed reproducibility
+
+The multi-seed experiment runner uses five default random seeds: 11, 42, 73, 101 and 202. Results are aggregated using mean and sample standard deviation. Individual seed results are retained for inspection. Run the experiments using python -m src.run_multiseed from the impact-aware application directory.
+
