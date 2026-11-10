@@ -1,58 +1,71 @@
 ﻿# Unified Predictive Analytics Platform
 
-An extensible machine-learning platform for predictive analytics,
-prediction uncertainty, data-quality assessment, statistical drift
-monitoring and impact-aware cost-sensitive model retraining.
+An integrated machine-learning platform for predictive analytics, prediction uncertainty, data quality, statistical drift monitoring, and impact-aware cost-sensitive model retraining.
 
 ## Applications
 
-- MetroPT: primary industrial predictive analytics application.
-- Appliances Energy Prediction: planned chronological regression benchmark.
-- NASA MERRA-2: planned advanced environmental-data application.
+- MetroPT: Industrial predictive analytics and monitoring.
+- Impact-Aware Monitoring: Drift detection and cost-sensitive retraining.
+- Appliances Energy Prediction: Planned chronological regression application.
+- NASA MERRA-2: Planned environmental-data application.
 
-Each application will be trained, validated and evaluated independently.
-Unrelated datasets will never be combined into a single training dataset.
+Each dataset is developed and evaluated independently.
 
 ## Core Capabilities
 
-1. Data loading and quality validation.
-2. Feature engineering.
-3. Regression model comparison.
-4. Chronological model evaluation.
-5. Prediction uncertainty and conformal calibration.
-6. Statistical data drift monitoring.
-7. Predictive performance monitoring.
-8. Impact-aware adaptive retraining.
-9. Controlled experiments and multi-seed evaluation.
-10. Interactive Streamlit dashboard.
+- Data loading and quality validation
+- Feature engineering and predictive modelling
+- Regression evaluation
+- Chronological validation
+- Prediction uncertainty and conformal calibration
+- Statistical feature-drift monitoring
+- Predictive performance monitoring
+- Impact-aware retraining decisions
+- Controlled multi-seed experiments
+- Interactive Streamlit dashboard
+
+## Installation
+
+Python 3.12 is recommended.
+
+Clone the repository:
+
+    git clone https://github.com/Algoryns07/-unified-predictive-analytics.git
+
+Install dependencies:
+
+    python -m pip install -r requirements.txt
+
+## Launch Dashboard
+
+Run from the repository root:
+
+    streamlit run applications/metropt/dashboard/app.py
+
+## Tests
+
+MetroPT and Impact-Aware applications maintain separate test suites. Run tests from their respective application directories.
 
 ## Methodological Principles
 
 - Use time-aware validation for time-dependent datasets.
 - Distinguish feature drift from predictive performance deterioration.
-- Separate controlled synthetic experiments from real observations.
-- Require labelled observations to verify predictive performance.
+- Separate controlled synthetic experiments from real-world observations.
 - Evaluate challenger models before approving model replacement.
-- Report assumptions, limitations and uncertainty transparently.
-
-## Installation
-
-Installation instructions will be finalised after dependency compatibility
-and Python-version checks.
-
-## Run Tests
-
-    python -m pytest -v
-
-## Launch Dashboard
-
-    streamlit run dashboard/app.py
-
-## Project Status
-
-Initial repository structure created. Integration and validation are pending.
+- Report assumptions, limitations, and uncertainty transparently.
 
 ## Data
 
-Raw datasets and large generated artifacts are not tracked in Git.
-See `data/README.md` for dataset placement instructions.
+Raw datasets and large generated artifacts are not intended to be committed to Git. Refer to application data documentation for dataset placement.
+
+## Project Status
+
+The MetroPT dashboard and Impact-Aware monitoring functionality are integrated. Additional dataset applications and experimental validation remain ongoing.
+
+## Limitations
+
+Controlled synthetic drift experiments do not establish real-world drift performance. Results must be interpreted in the context of their datasets and experimental conditions.
+
+## License
+
+No open-source license is provided. All rights reserved.
