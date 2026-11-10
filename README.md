@@ -1,10 +1,10 @@
-# Impact-Aware Data Drift Assessment & Predictive Analytics Platform
+﻿# Impact-Aware Data Drift Assessment & Predictive Analytics Platform
 
 An interactive machine-learning platform for monitoring data distribution changes, assessing their potential impact, and supporting cost-sensitive model-retraining decisions. The platform also includes a separate MetroPT industrial predictive-analytics application.
 
 <p align="center">
   <a href="https://impact-aware-ml.streamlit.app/">
-    <strong>🚀 OPEN THE LIVE DASHBOARD</strong>
+    <strong>ðŸš€ OPEN THE LIVE DASHBOARD</strong>
   </a>
 </p>
 
@@ -30,7 +30,7 @@ The repository brings together two application tracks in one dashboard. Their da
 
 ## 2. Live Dashboard
 
-### [🚀 Launch Impact-Aware Data Drift Assessment Dashboard](https://impact-aware-ml.streamlit.app/)
+### [ðŸš€ Launch Impact-Aware Data Drift Assessment Dashboard](https://impact-aware-ml.streamlit.app/)
 
 The deployed Streamlit application provides four main sections:
 
@@ -91,33 +91,44 @@ Reference Data + Incoming Data
 
 This diagram represents the overall monitoring concept. The exact operations and outputs depend on the selected application and experiment.
 
-## 5. Technology Stack
+## 5. Machine-Learning Methods
 
-- **Python** — application and machine-learning implementation
-- **Streamlit** — interactive web dashboard
-- **pandas, NumPy** — data processing
-- **scikit-learn** — machine-learning workflows
-- **SciPy, statsmodels** — statistical analysis
-- **Matplotlib, Seaborn, Plotly** — visualisation
-- **XGBoost** — supported gradient-boosting workflows
-- **pytest** — automated testing
+The platform uses **Linear Regression** in its regression-based predictive analytics workflow. Linear Regression estimates continuous target values from input features and provides an interpretable baseline for understanding relationships between input variables and predicted outcomes.
+
+The project also incorporates:
+
+- **Statistical Drift Detection:** Measures changes in incoming data distributions.
+- **Impact-Aware Assessment:** Evaluates the potential significance of detected changes.
+- **Cost-Sensitive Retraining:** Compares retraining decisions while considering associated costs.
+
+Linear Regression is a predictive modelling method; it is not the drift-detection algorithm.
+## 6. Technology Stack
+
+- **Python** â€” application and machine-learning implementation
+- **Streamlit** â€” interactive web dashboard
+- **pandas, NumPy** â€” data processing
+- **scikit-learn** â€” machine-learning workflows
+- **SciPy, statsmodels** â€” statistical analysis
+- **Matplotlib, Seaborn, Plotly** â€” visualisation
+- **XGBoost** â€” supported gradient-boosting workflows
+- **pytest** â€” automated testing
 
 The full dependency list is maintained in [`requirements.txt`](requirements.txt).
 
-## 6. Repository Structure
+## 7. Repository Structure
 
 ```text
 applications/
-├── metropt/
-│   └── dashboard/
-│       └── app.py          # Main Streamlit dashboard entry point
-└── impact_aware/
-    └── outputs/            # Impact-Aware experiment result files
+â”œâ”€â”€ metropt/
+â”‚   â””â”€â”€ dashboard/
+â”‚       â””â”€â”€ app.py          # Main Streamlit dashboard entry point
+â””â”€â”€ impact_aware/
+    â””â”€â”€ outputs/            # Impact-Aware experiment result files
 ```
 
 The repository also includes application source code, configuration, documentation, tests, and experiment outputs. The structure above highlights the principal application locations rather than listing every file.
 
-## 7. Run the Project Locally
+## 8. Run the Project Locally
 
 ### Requirements
 
@@ -125,14 +136,14 @@ The repository also includes application source code, configuration, documentati
 - Git
 - A compatible environment for the packages listed in `requirements.txt`
 
-### Step 1 — Clone the repository
+### Step 1 â€” Clone the repository
 
 ```bash
 git clone https://github.com/Algoryns07/-unified-predictive-analytics.git
 cd -unified-predictive-analytics
 ```
 
-### Step 2 — Create and activate a virtual environment
+### Step 2 â€” Create and activate a virtual environment
 
 **Windows PowerShell**
 
@@ -148,14 +159,14 @@ python3.12 -m venv .venv
 source .venv/bin/activate
 ```
 
-### Step 3 — Install dependencies
+### Step 3 â€” Install dependencies
 
 ```bash
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### Step 4 — Launch the dashboard
+### Step 4 â€” Launch the dashboard
 
 ```bash
 streamlit run applications/metropt/dashboard/app.py
@@ -163,7 +174,7 @@ streamlit run applications/metropt/dashboard/app.py
 
 Open the local address printed by Streamlit, normally `http://localhost:8501`.
 
-## 8. Deployment
+## 9. Deployment
 
 The dashboard is hosted on **Streamlit Community Cloud**.
 
@@ -172,7 +183,7 @@ The dashboard is hosted on **Streamlit Community Cloud**.
 - **Deployment branch:** `cloud-preview`
 - **Application entry point:** `applications/metropt/dashboard/app.py`
 
-## 9. Experimental Considerations and Limitations
+## 10. Experimental Considerations and Limitations
 
 Results must be interpreted in the context of the dataset, experimental setup, and assumptions used.
 
@@ -183,11 +194,11 @@ Results must be interpreted in the context of the dataset, experimental setup, a
 - Results from separate datasets and application tracks should not be treated as though they came from one shared training dataset.
 - The dashboard is an academic and experimental platform; its outputs should not be used as operational decisions without further validation.
 
-## 10. Reproducibility
+## 11. Reproducibility
 
 For reproducible comparisons, record the dataset, preprocessing steps, model and detector settings, random seed, evaluation period, and retraining-policy assumptions. Where repeated runs are available, report variability rather than relying on a single result.
 
-## 11. Usage and License
+## 12. Usage and License
 
 This repository is maintained as an academic machine-learning project. No open-source license has been provided. Unless a license is added by the repository owner, the code is not granted open-source reuse permissions by default. Please contact the repository owner before reuse or redistribution.
 
@@ -195,5 +206,6 @@ This repository is maintained as an academic machine-learning project. No open-s
 
 ### Quick Access
 
-- **[🚀 Open the Live Dashboard](https://impact-aware-ml.streamlit.app/)**
+- **[ðŸš€ Open the Live Dashboard](https://impact-aware-ml.streamlit.app/)**
 - **[View the GitHub Repository](https://github.com/Algoryns07/-unified-predictive-analytics)**
+
