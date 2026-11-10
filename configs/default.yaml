@@ -1,0 +1,15 @@
+﻿project:
+  name: unified-predictive-analytics
+  random_seed: 42
+
+evaluation:
+  strategy: chronological
+  test_fraction: 0.20
+
+monitoring:
+  psi_threshold: 0.20
+  significance_level: 0.05
+
+retraining:
+  require_performance_evidence: true
+  challenger_validation: true

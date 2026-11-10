@@ -1,0 +1,53 @@
+﻿# Python environments
+.venv/
+.venv*/
+venv/
+env/
+
+# Python generated files
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+
+# IDE and operating system
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Raw datasets
+data/raw/
+data/processed/
+data/external/
+*.parquet
+*.feather
+
+# Generated outputs and models
+outputs/*
+!outputs/.gitkeep
+/models/
+*.joblib
+*.pkl
+*.pickle
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+
+# Temporary validation cache
+.pycache_validation/
+
+# Local audit reports
+*_audit.txt
+*_validation.txt
+
