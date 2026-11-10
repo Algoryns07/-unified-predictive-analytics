@@ -53,3 +53,4 @@ outputs/*
 
 *.pyc
 *.pyo
+*_verification.txt
