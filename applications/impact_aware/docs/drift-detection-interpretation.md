@@ -30,3 +30,25 @@ be monitored and interpreted separately.
 
 Real-world drift windows without ground-truth labels cannot establish
 whether every alert represents a genuine operational problem.
+
+## Interpreting Drift Detection Results
+
+A drift detection alert indicates a change in feature distributions.
+It does not automatically establish that predictive performance
+has deteriorated.
+
+### Important evaluation considerations
+
+- Monitor false-positive alerts on no-shift control data.
+- Evaluate missed detections under intentional feature shifts.
+- Examine predictive performance alongside statistical drift metrics.
+- Consider the operational cost of unnecessary retraining.
+- Validate detection thresholds before final evaluation.
+
+### Research limitation
+
+Results from controlled synthetic feature shifts should not be
+treated as evidence of real-world detection performance.
+Additional validation on independent datasets and realistic
+monitoring windows is necessary.
+
