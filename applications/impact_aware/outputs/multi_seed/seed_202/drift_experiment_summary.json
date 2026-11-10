@@ -1,0 +1,61 @@
+{
+  "dataset": "scikit-learn breast cancer",
+  "model": "Logistic Regression",
+  "random_state": 202,
+  "python_version": "3.14.6",
+  "scikit_learn_version": "1.9.1",
+  "sample_counts": {
+    "training": 369,
+    "reference": 100,
+    "monitoring_retraining": 50,
+    "future_evaluation": 50
+  },
+  "data_protocol": "Separate training, reference, monitoring/retraining, and future evaluation datasets.",
+  "strategies": [
+    "no_retraining",
+    "always_retrain",
+    "drift_based",
+    "impact_aware"
+  ],
+  "retraining_cost_assumption": {
+    "unit": "F1-equivalent",
+    "value": 0.08,
+    "note": "Illustrative cost penalty, not a measured monetary cost."
+  },
+  "scenarios": [
+    {
+      "scenario": "control_no_shift",
+      "drift_detected": true,
+      "drifted_features": "mean radius,mean texture,mean perimeter,mean area,mean smoothness,mean compactness,mean concavity,mean concave points,mean symmetry,mean fractal dimension,radius error,texture error,perimeter error,area error,smoothness error,compactness error,concave points error,symmetry error,fractal dimension error,worst radius,worst texture,worst perimeter,worst area,worst smoothness,worst compactness,worst concavity,worst concave points,worst symmetry,worst fractal dimension",
+      "reference_f1": 0.992,
+      "monitoring_f1": 0.9841269841269841,
+      "monitoring_recall": 1.0,
+      "impact_class": "DRIFT_NO_HARM",
+      "recommended_action": "MONITOR",
+      "f1_drop": 0.00787301587301592
+    },
+    {
+      "scenario": "single_feature_shift",
+      "drift_detected": true,
+      "drifted_features": "mean radius,mean texture,mean perimeter,mean area,mean smoothness,mean compactness,mean concavity,mean concave points,mean symmetry,mean fractal dimension,radius error,texture error,perimeter error,area error,smoothness error,compactness error,concave points error,symmetry error,fractal dimension error,worst radius,worst texture,worst perimeter,worst area,worst smoothness,worst compactness,worst concavity,worst concave points,worst symmetry,worst fractal dimension",
+      "reference_f1": 0.992,
+      "monitoring_f1": 0.9841269841269841,
+      "monitoring_recall": 1.0,
+      "impact_class": "DRIFT_NO_HARM",
+      "recommended_action": "MONITOR",
+      "f1_drop": 0.00787301587301592
+    },
+    {
+      "scenario": "multi_feature_shift",
+      "drift_detected": true,
+      "drifted_features": "mean radius,mean texture,mean perimeter,mean area,mean smoothness,mean compactness,mean concavity,mean concave points,mean symmetry,mean fractal dimension,radius error,texture error,perimeter error,area error,smoothness error,compactness error,concave points error,symmetry error,fractal dimension error,worst radius,worst texture,worst perimeter,worst area,worst smoothness,worst compactness,worst concavity,worst concave points,worst symmetry,worst fractal dimension",
+      "reference_f1": 0.992,
+      "monitoring_f1": 0.9841269841269841,
+      "monitoring_recall": 1.0,
+      "impact_class": "DRIFT_NO_HARM",
+      "recommended_action": "MONITOR",
+      "f1_drop": 0.00787301587301592
+    }
+  ],
+  "evaluation_note": "Controlled simulated feature shifts; results are not real-world evidence."
+}

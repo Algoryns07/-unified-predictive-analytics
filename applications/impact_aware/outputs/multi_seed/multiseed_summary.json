@@ -1,0 +1,26 @@
+{
+  "random_seeds": [
+    11,
+    42,
+    73,
+    101,
+    202
+  ],
+  "number_of_seeds": 5,
+  "number_of_scenarios": 3,
+  "number_of_policies": 4,
+  "aggregation": "Mean and sample standard deviation across seeds",
+  "detection_metrics": {
+    "true_negative": 0,
+    "false_positive": 5,
+    "false_negative": 0,
+    "true_positive": 10,
+    "accuracy": 0.6666666666666666,
+    "precision": 0.6666666666666666,
+    "recall": 1.0,
+    "specificity": 0.0,
+    "false_positive_rate": 1.0,
+    "f1": 0.8
+  },
+  "note": "Repeated controlled experiments. Results are based on synthetic feature shifts in the breast cancer dataset and are not real-world evidence."
+}
