@@ -26,6 +26,7 @@ with st.sidebar:
     st.warning("Recommendations are decision-support estimates. They do not automatically replace a deployed model.")
 
 outputs_dir = ROOT / "outputs"
+impact_outputs_dir = ROOT.parent / "impact_aware" / "outputs"
 
 tab_upload, tab_results, tab_about, tab_impact = st.tabs(["Upload & Predict", "Existing Experiments", "Method & Limitations", "Impact-Aware Monitoring"])
 
@@ -108,7 +109,7 @@ with tab_upload:
             st.dataframe(all_features[columns], use_container_width=True, hide_index=True)
             with st.expander("Detailed all-column statistics"):
                 st.dataframe(all_features, use_container_width=True, hide_index=True)
-        st.caption("Screening thresholds: numeric PSI â‰¥ 0.20 or BH-adjusted KS q-value < 0.05; categorical total-variation distance â‰¥ 0.20 or BH-adjusted chi-square q-value < 0.05. Distribution changes do not prove model failure.")
+        st.caption("Screening thresholds: numeric PSI Ã¢â€°Â¥ 0.20 or BH-adjusted KS q-value < 0.05; categorical total-variation distance Ã¢â€°Â¥ 0.20 or BH-adjusted chi-square q-value < 0.05. Distribution changes do not prove model failure.")
         shared = [c for c in reference.columns if c in incoming.columns]
         targets = [c for c in shared if c in reference.select_dtypes(include="number").columns]
         st.divider()
@@ -363,19 +364,27 @@ with tab_results:
         "Controlled drift": "controlled_drift_summary.csv",
         "Controlled adaptive retraining": "controlled_adaptive_retraining_aggregate.csv",
         "Performance-aware drift": "metropt_performance_drift_summary.csv",
+        "Impact-Aware: Drift experiments": "drift_experiment_results.csv",
+        "Impact-Aware: Drift metric comparison": "drift_metric_comparison.csv",
+        "Impact-Aware: Policy comparison": "policy_comparison.csv",
+        "Impact-Aware: Multi-seed policy summary": "policy_metrics_summary.csv",
+        "Impact-Aware: Multi-seed detection summary": "scenario_detection_summary.csv",
     }
 
     available = {
         name: filename
         for name, filename in result_files.items()
-        if (outputs_dir / filename).exists()
+        if (outputs_dir / filename).exists() or (impact_outputs_dir / filename).exists()
     }
 
     if not available:
         st.info("No experiment output CSVs were found in the outputs folder.")
     else:
         choice = st.selectbox("Select experiment", list(available), key="old_experiment")
-        frame = pd.read_csv(outputs_dir / available[choice])
+        result_path = outputs_dir / available[choice]
+        if not result_path.exists():
+            result_path = impact_outputs_dir / available[choice]
+        frame = pd.read_csv(result_path)
         st.caption(f"Source: {available[choice]} | {len(frame):,} rows")
         st.dataframe(frame, use_container_width=True)
 
@@ -481,8 +490,8 @@ with tab_impact:
                     )
 
                     st.caption(
-                        "Thresholds: PSI ≥ 0.10, BH-adjusted KS "
-                        "p-value < 0.05, or normalized Wasserstein ≥ 0.20."
+                        "Thresholds: PSI â‰¥ 0.10, BH-adjusted KS "
+                        "p-value < 0.05, or normalized Wasserstein â‰¥ 0.20."
                     )
 
             except Exception as exc:
@@ -632,8 +641,8 @@ with tab_impact:
 
             st.caption(
                 f"Seeds: {summary.get('random_seeds', [])} | "
-                f"Scenarios: {summary.get('number_of_scenarios', '—')} | "
-                f"Policies: {summary.get('number_of_policies', '—')}"
+                f"Scenarios: {summary.get('number_of_scenarios', 'â€”')} | "
+                f"Policies: {summary.get('number_of_policies', 'â€”')}"
             )
 
             st.info(summary.get("note", "Controlled experiment results."))
