@@ -27,7 +27,7 @@ with st.sidebar:
 
 outputs_dir = ROOT / "outputs"
 
-tab_upload, tab_results, tab_about = st.tabs(["Upload & Predict", "Existing Experiments", "Method & Limitations"])
+tab_upload, tab_results, tab_about, tab_impact = st.tabs(["Upload & Predict", "Existing Experiments", "Method & Limitations", "Impact-Aware Monitoring"])
 
 with tab_upload:
     st.subheader("1. Upload datasets")
@@ -399,3 +399,265 @@ with tab_about:
     """)
 
     st.info("Use representative time-aware reference and incoming windows. Avoid random shuffling for time-dependent industrial data.")
+
+
+# ================= UNIFIED IMPACT-AWARE MONITORING =================
+import importlib.util
+import subprocess
+import json
+
+IMPACT_ROOT = Path(__file__).resolve().parents[2] / "impact_aware"
+IMPACT_SRC = IMPACT_ROOT / "src"
+
+def load_impact_module(name, filename):
+    spec = importlib.util.spec_from_file_location(
+        f"impact_aware_{name}", IMPACT_SRC / filename
+    )
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Cannot load {filename}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+impact_drift = load_impact_module("drift", "drift_detection.py")
+impact_policy = load_impact_module("policy", "impact_policy.py")
+
+with tab_impact:
+    st.header("Impact-Aware Drift Monitoring")
+    st.caption(
+        "Unified monitoring that distinguishes feature drift from "
+        "harmful predictive-performance deterioration."
+    )
+
+    left, right = st.columns(2)
+
+    with left:
+        st.subheader("1. Feature Drift Assessment")
+        ref_file = st.file_uploader(
+            "Reference dataset (CSV)", type=["csv"], key="ia_ref"
+        )
+        cur_file = st.file_uploader(
+            "Current dataset (CSV)", type=["csv"], key="ia_cur"
+        )
+
+        if ref_file is not None and cur_file is not None:
+            try:
+                ref = pd.read_csv(ref_file)
+                cur = pd.read_csv(cur_file)
+
+                cols = [
+                    c for c in ref.columns.intersection(cur.columns)
+                    if pd.api.types.is_numeric_dtype(ref[c])
+                    and pd.api.types.is_numeric_dtype(cur[c])
+                ]
+
+                if not cols:
+                    st.warning("No common numeric feature columns found.")
+                else:
+                    result = impact_drift.compare_frames(
+                        ref[cols], cur[cols]
+                    )
+
+                    rows = [
+                        {"Feature": name, **stats}
+                        for name, stats in result["features"].items()
+                    ]
+
+                    a, b = st.columns(2)
+                    a.metric("Features assessed", len(rows))
+                    b.metric(
+                        "Drifted features",
+                        len(result["drifted_features"])
+                    )
+
+                    st.dataframe(
+                        pd.DataFrame(rows), use_container_width=True
+                    )
+
+                    st.write(
+                        "Overall feature drift:",
+                        "Detected" if result["any_drift"]
+                        else "Not detected"
+                    )
+
+                    st.caption(
+                        "Thresholds: PSI ≥ 0.10, BH-adjusted KS "
+                        "p-value < 0.05, or normalized Wasserstein ≥ 0.20."
+                    )
+
+            except Exception as exc:
+                st.error(f"Drift comparison failed: {exc}")
+        else:
+            st.info("Upload both reference and current CSV files.")
+
+    with right:
+        st.subheader("2. Cost-Sensitive Impact Decision")
+        st.caption(
+            "Enter measured F1 scores from comparable labelled "
+            "evaluation windows."
+        )
+
+        drift_flag = st.checkbox(
+            "Feature drift detected", value=False, key="ia_drift_flag"
+        )
+
+        ref_f1 = st.number_input(
+            "Reference F1", 0.0, 1.0, 0.90, 0.01, key="ia_ref_f1"
+        )
+        cur_f1 = st.number_input(
+            "Current F1", 0.0, 1.0, 0.88, 0.01, key="ia_cur_f1"
+        )
+        harmful = st.number_input(
+            "Harmful F1-drop threshold",
+            0.0, 1.0, 0.05, 0.01, key="ia_harmful"
+        )
+        severe = st.number_input(
+            "Severe F1-drop threshold",
+            0.0, 1.0, 0.12, 0.01, key="ia_severe"
+        )
+        cost = st.number_input(
+            "Retraining-cost threshold (utility units)",
+            0.0, 1.0, 0.08, 0.01, key="ia_cost"
+        )
+        benefit = st.number_input(
+            "Minimum expected benefit (utility units)",
+            0.0, 1.0, 0.03, 0.01, key="ia_benefit"
+        )
+
+        if st.button("Evaluate retraining policy", key="ia_evaluate"):
+            try:
+                decision = impact_policy.decide(
+                    drift_detected=drift_flag,
+                    reference_f1=ref_f1,
+                    current_f1=cur_f1,
+                    harmful_drop=harmful,
+                    severe_drop=severe,
+                    retraining_cost=cost,
+                    minimum_benefit=benefit,
+                )
+
+                st.success(
+                    f"Recommended action: {decision['recommended_action']}"
+                )
+                st.metric("Impact class", decision["impact_class"])
+                st.metric(
+                    "Measured F1 drop",
+                    f"{decision['f1_drop']:.4f}"
+                )
+                st.json(decision)
+
+            except Exception as exc:
+                st.error(f"Policy evaluation failed: {exc}")
+
+    st.divider()
+    st.subheader("3. Multi-Seed Controlled Experiments")
+
+    st.warning(
+        "These experiments use controlled synthetic shifts on the "
+        "breast cancer dataset. They are not real-world MetroPT evidence."
+    )
+
+    seed_text = st.text_input(
+        "Random seeds",
+        "11,42,73,101,202",
+        key="ia_seeds"
+    )
+
+    if st.button("Run Multi-Seed Experiment", key="ia_run_multiseed"):
+        try:
+            seeds = [
+                int(x.strip())
+                for x in seed_text.split(",")
+                if x.strip()
+            ]
+
+            if (
+                not seeds
+                or len(seeds) != len(set(seeds))
+                or min(seeds) < 0
+            ):
+                raise ValueError(
+                    "Provide unique, non-negative integer seeds."
+                )
+
+            runner = (
+                "from pathlib import Path; "
+                "from src.run_multiseed import run_multiseed; "
+                f"run_multiseed(seeds={repr(seeds)}, "
+                "output_dir=Path('outputs/multi_seed'))"
+            )
+
+            completed = subprocess.run(
+                [sys.executable, "-c", runner],
+                cwd=str(IMPACT_ROOT),
+                capture_output=True,
+                text=True,
+                timeout=1800,
+            )
+
+            if completed.returncode:
+                st.error("Multi-seed experiment failed.")
+                st.code(completed.stderr[-6000:])
+            else:
+                st.success("Multi-seed experiment completed.")
+                st.code(completed.stdout[-6000:])
+
+        except subprocess.TimeoutExpired:
+            st.error("Experiment exceeded the 30-minute time limit.")
+        except Exception as exc:
+            st.error(f"Experiment could not run: {exc}")
+
+    results_dir = IMPACT_ROOT / "outputs" / "multi_seed"
+    summary_path = results_dir / "multiseed_summary.json"
+
+    if summary_path.exists():
+        try:
+            summary = json.loads(
+                summary_path.read_text(encoding="utf-8")
+            )
+            metrics = summary.get("detection_metrics", {})
+
+            st.subheader("Latest Multi-Seed Detection Quality")
+            metric_cols = st.columns(4)
+
+            for col, key in zip(
+                metric_cols,
+                ["precision", "recall", "f1", "balanced_accuracy"]
+            ):
+                if key in metrics:
+                    col.metric(
+                        key.replace("_", " ").title(),
+                        f"{metrics[key]:.3f}"
+                    )
+
+            st.caption(
+                f"Seeds: {summary.get('random_seeds', [])} | "
+                f"Scenarios: {summary.get('number_of_scenarios', '—')} | "
+                f"Policies: {summary.get('number_of_policies', '—')}"
+            )
+
+            st.info(summary.get("note", "Controlled experiment results."))
+
+            for filename, title in [
+                ("scenario_detection_summary.csv",
+                 "Scenario Detection Summary"),
+                ("policy_metrics_summary.csv",
+                 "Policy Metrics Summary"),
+                ("drift_detection_metrics.csv",
+                 "Drift Detection Metrics"),
+            ]:
+                file_path = results_dir / filename
+
+                if file_path.exists():
+                    st.markdown(f"**{title}**")
+                    st.dataframe(
+                        pd.read_csv(file_path),
+                        use_container_width=True
+                    )
+
+        except Exception as exc:
+            st.warning(f"Could not display saved results: {exc}")
+    else:
+        st.info("No multi-seed results yet. Run the experiment above.")
+
+# ================= END IMPACT-AWARE MONITORING =================
