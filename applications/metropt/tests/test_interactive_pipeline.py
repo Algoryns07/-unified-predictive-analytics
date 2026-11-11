@@ -265,3 +265,40 @@ def test_whole_dataset_reports_duplicate_rates():
     assert result["incoming_duplicates"] == 0
     assert result["reference_duplicate_rate_pct"] == 25.0
     assert result["incoming_duplicate_rate_pct"] == 0.0
+
+
+def test_hist_gradient_boosting_with_categorical_features():
+    rng = np.random.default_rng(42)
+    n = 160
+
+    sensor = rng.normal(10, 2, n)
+    mode = np.where(np.arange(n) % 2 == 0, "A", "B")
+
+    ref = pd.DataFrame({
+        "sensor": sensor,
+        "mode": mode,
+    })
+
+    ref["target"] = (
+        2.0 * sensor
+        + np.where(mode == "A", 5.0, -5.0)
+        + rng.normal(0, 0.2, n)
+    )
+
+    inc = pd.DataFrame({
+        "sensor": rng.normal(11, 2, 40),
+        "mode": ["A", "B", "C", "A"] * 10,
+    })
+
+    predictions, metrics, features = train_and_predict(
+        ref,
+        inc,
+        "target",
+        "HistGradientBoosting",
+    )
+
+    assert len(predictions) == len(inc)
+    assert "prediction" in predictions.columns
+    assert np.isfinite(predictions["prediction"]).all()
+    assert metrics["RMSE"] >= 0
+    assert len(features) == 2
