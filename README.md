@@ -19,7 +19,7 @@ This project provides an interactive platform to explore predictive analytics, d
 The platform integrates two application components:
 
 1. Impact-Aware Data Drift Monitoring.
-2. MetroPT Industrial Predictive Analytics.
+2. MetroPT Industrial Predictive Analytics
 
 Both components are accessible through a unified dashboard. Their datasets and experimental results remain separate.
 
